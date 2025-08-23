@@ -1,17 +1,10 @@
 package com.splguyjr.adserver.infrastructure.adapter.outbound.cache
 
-import java.time.Duration
-
+// Redis 키 네이밍 전용 유틸리티 클래스
 object RedisKeys {
-    /** 전체 서빙가능 AdSet 집합 */
-    const val candidateAdSets = "ad:candidate:adsets"
+    /** 서빙 가능한 AdSet ID 전체 풀(Set) */
+    const val candidateAdSets = "cand:adsets"
 
-    /** AdSet 별 후보 Creative 집합 */
-    fun candidateCreativesOfAdSet(adSetId: Long) = "ad:candidate:adset:$adSetId:creatives"
-
-    fun candidateSegmentOfAdSet(adSetId: Long) = "ad:candidate:adset:$adSetId:segment"
-}
-
-object RedisTtl {
-    val default: Duration = Duration.ofMinutes(15)
+    /** 특정 AdSet의 '단일' Creative ID를 담는 String 키 */
+    fun adsetCreative(adSetId: Long) = "cand:adset:$adSetId"
 }
