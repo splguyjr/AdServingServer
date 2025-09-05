@@ -1,4 +1,4 @@
-package com.splguyjr.adserver.presentation.scheduler
+package com.splguyjr.adserver.application.scheduler
 
 import com.splguyjr.adserver.application.port.inbound.ScheduleSyncUseCase
 import org.slf4j.LoggerFactory

@@ -2,21 +2,23 @@ package com.splguyjr.adserver.infrastructure.adapter.outbound.persistence
 
 import com.splguyjr.adserver.domain.model.Schedule
 import com.splguyjr.adserver.domain.port.outbound.ScheduleRepository
-import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.ScheduleRedisWriter
-import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.SpentBudgetRedisWriter
-import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.model.SpentBudget
+import com.splguyjr.adserver.domain.readmodel.EligibleScheduleBudget
+import com.splguyjr.adserver.domain.readmodel.SpentBudget
+import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.ScheduleRedisCache
+import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.SpentBudgetRedisCache
 import com.splguyjr.adserver.infrastructure.adapter.outbound.persistence.entity.ScheduleEntity
 import com.splguyjr.adserver.infrastructure.adapter.outbound.persistence.mapper.ScheduleEntityMapper
 import com.splguyjr.adserver.infrastructure.adapter.outbound.persistence.repository.SpringDataScheduleRepository
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 
 @Component
 class ScheduleRepositoryAdapter(
     private val jpa: SpringDataScheduleRepository,
     private val mapper: ScheduleEntityMapper,
-    private val scheduleWriter: ScheduleRedisWriter,
-    private val spentWriter: SpentBudgetRedisWriter
+    private val scheduleWriter: ScheduleRedisCache,
+    private val spentBudgetCache: SpentBudgetRedisCache
 ) : ScheduleRepository {
 
     override fun findIdByNaturalKey(
@@ -35,6 +37,16 @@ class ScheduleRepositoryAdapter(
         schedules.forEach { saveOrUpdate(it) }
         return schedules.size
     }
+
+    @Transactional(readOnly = true)
+    override fun findEligibleOnDateWithBudgets(date: LocalDate): List<EligibleScheduleBudget> =
+        jpa.findEligibleOnDateWithBudgets(date).map {
+            EligibleScheduleBudget(
+                scheduleId = it.getId(),
+                campaignTotalBudget = it.getCampaignTotalBudget(),
+                adSetDailyBudget = it.getAdSetDailyBudget()
+            )
+        }
 
     /* -------- 내부 메소드 -------- */
 
@@ -58,7 +70,7 @@ class ScheduleRepositoryAdapter(
         scheduleWriter.put(scheduleId, schedule)
 
         // 2) 예산 캐시
-        spentWriter.put(
+        spentBudgetCache.put(
             scheduleId,
             SpentBudget(
                 totalSpentBudget = schedule.campaign.totalSpentBudget,

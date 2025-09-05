@@ -2,7 +2,7 @@ package com.splguyjr.adserver.infrastructure.adapter.outbound.cache
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.splguyjr.adserver.domain.model.Schedule
-import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.model.SpentBudget
+import com.splguyjr.adserver.domain.readmodel.SpentBudget
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory

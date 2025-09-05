@@ -5,15 +5,17 @@ import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Component
 
 @Component
-class ScheduleRedisWriter(
-    private val scheduleRedisTemplate: RedisTemplate<String, Schedule>
+class ScheduleRedisCache(
+    private val template: RedisTemplate<String, Schedule>
 ) {
     fun put(scheduleId: Long, schedule: Schedule) {
-        scheduleRedisTemplate.opsForValue().set(RedisKeys.schedule(scheduleId), schedule)
+        template.opsForValue().set(RedisKeys.schedule(scheduleId), schedule)
     }
+
     fun get(scheduleId: Long): Schedule? =
-        scheduleRedisTemplate.opsForValue().get(RedisKeys.schedule(scheduleId))
+        template.opsForValue().get(RedisKeys.schedule(scheduleId))
+
     fun delete(scheduleId: Long) {
-        scheduleRedisTemplate.delete(RedisKeys.schedule(scheduleId))
+        template.delete(RedisKeys.schedule(scheduleId))
     }
 }
