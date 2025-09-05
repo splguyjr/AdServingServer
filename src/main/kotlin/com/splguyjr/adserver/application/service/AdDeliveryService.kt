@@ -1,60 +1,55 @@
 package com.splguyjr.adserver.application.service
 
-import com.splguyjr.adserver.application.dto.AdDeliveryResponse
-import com.splguyjr.adserver.domain.model.enum.Status
-import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.RedisCacheWriter
+import com.splguyjr.adserver.domain.port.outbound.CandidateCachePort
+import com.splguyjr.adserver.domain.port.outbound.ScheduleRepository
+import com.splguyjr.adserver.domain.port.outbound.SpentBudgetReaderPort
+import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.ScheduleRedisCache
+import com.splguyjr.adserver.presentation.dto.AdDeliveryResponse
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 
 @Service
 class AdDeliveryService(
-    private val cache: RedisCacheWriter,
-    private val scheduleRepo: ScheduleRepository
+    private val candidateCache: CandidateCachePort,
+    private val scheduleCache: ScheduleRedisCache,     // Redis 본문: scheduleId -> Schedule
+    private val scheduleRepository: ScheduleRepository,
+    private val spentBudgetReader: SpentBudgetReaderPort
 ) {
-    /** 1차 Redis, 미스 시 MySQL로 채워넣고 한 개 전달 */
     @Transactional(readOnly = true)
     fun deliverOne(): AdDeliveryResponse? {
-        // 1) Redis 시도
-        tryPickFromCache()?.let { return it }
-
-        // 2) Fallback: DB 재조회 → Redis 갱신(간이) → 하나 선택
         val today = LocalDate.now()
-        val eligibleAdSetIds = scheduleRepo.findEligibleAdSetScheduleIds(today)
-        if (eligibleAdSetIds.isEmpty()) return null
 
-        val rows = scheduleRepo.findCreativeCacheRowsByAdSetIds(eligibleAdSetIds, Status.ON)
-        if (rows.isEmpty()) return null
+        // 1) Redis 캐시 후보군들 중 하나 선정
+        candidateCache.getCurrentCandidateScheduleIds()
+            .shuffled()
+            .forEach { id ->
+                val schedule = scheduleCache.get(id) ?: scheduleRepository.findById(id)
+                if (schedule != null) {
+                    val spent = spentBudgetReader.get(id)
+                    if (schedule.isEligibleToday(today, spent)) {
+                        return AdDeliveryResponse.from(id, schedule, spent)
+                    }
+                }
+            }
 
-        /*val cacheByAdSet: Map<Long, CreativeCache> = rows.associate { row ->
-            row.adSetId to CreativeCache(
-                imagePath = row.imagePath,
-                logoPath = row.logoPath,
-                title = row.title,
-                subtitle = row.subtitle,
-                description = row.description,
-                landingUrl = row.landingUrl,
-                status = row.status.name
-            )
+        // 2) fallback: 오늘자 eligible 계산 → 소진액 기준으로 필터 → 랜덤 선택
+        val rows = scheduleRepository.findEligibleOnDateWithBudgets(today)
+
+        val eligibleIds = rows.mapNotNull { r ->
+            val spent = spentBudgetReader.get(r.scheduleId)
+            val schedule = scheduleCache.get(r.scheduleId) ?: scheduleRepository.findById(r.scheduleId)
+
+            if (schedule != null && schedule.isEligibleToday(today, spent)) r.scheduleId
+            else null
         }
 
-        val idsWithCreative = cacheByAdSet.keys.map(Long::toString)
-        if (idsWithCreative.isEmpty()) return null
+        if (eligibleIds.isEmpty()) return null
 
-        // cand:adsets에는 값이 있는 세트만
-        cache.overwriteCandidateSet(RedisKeys.candidateAdSets, idsWithCreative)
-        // 세트별 CreativeCache 저장
-        cacheByAdSet.forEach { (adSetId, creative) -> cache.putCreative(adSetId, creative) }
+        val pick = eligibleIds.random()
+        val schedule = scheduleCache.get(pick) ?: scheduleRepository.findById(pick) ?: return null
+        val spent = spentBudgetReader.get(pick)
 
-        // 하나 골라 반환
-        val chosenAdSetId = idsWithCreative[Random.nextInt(idsWithCreative.size)].toLong()
-        return AdDeliveryResponse(chosenAdSetId, cacheByAdSet[chosenAdSetId]!!)*/
-    }
-
-    private fun tryPickFromCache(): AdDeliveryResponse? {
-        val adSetIdStr = cache.srandAdSet() ?: return null
-        val adSetId = adSetIdStr.toLongOrNull() ?: return null
-        val creative = cache.getCreative(adSetId) ?: return null
-        return AdDeliveryResponse(adSetId, creative)
+        return AdDeliveryResponse.from(pick, schedule, spent)
     }
 }
