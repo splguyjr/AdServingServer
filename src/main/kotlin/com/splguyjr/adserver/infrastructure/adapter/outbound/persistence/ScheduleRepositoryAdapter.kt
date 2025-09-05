@@ -2,6 +2,9 @@ package com.splguyjr.adserver.infrastructure.adapter.outbound.persistence
 
 import com.splguyjr.adserver.domain.model.Schedule
 import com.splguyjr.adserver.domain.port.outbound.ScheduleRepository
+import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.ScheduleRedisWriter
+import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.SpentBudgetRedisWriter
+import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.model.SpentBudget
 import com.splguyjr.adserver.infrastructure.adapter.outbound.persistence.entity.ScheduleEntity
 import com.splguyjr.adserver.infrastructure.adapter.outbound.persistence.mapper.ScheduleEntityMapper
 import com.splguyjr.adserver.infrastructure.adapter.outbound.persistence.repository.SpringDataScheduleRepository
@@ -11,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional
 @Component
 class ScheduleRepositoryAdapter(
     private val jpa: SpringDataScheduleRepository,
-    private val mapper: ScheduleEntityMapper
+    private val mapper: ScheduleEntityMapper,
+    private val scheduleWriter: ScheduleRedisWriter,
+    private val spentWriter: SpentBudgetRedisWriter
 ) : ScheduleRepository {
 
     override fun findIdByNaturalKey(
@@ -20,20 +25,45 @@ class ScheduleRepositoryAdapter(
 
     @Transactional
     override fun saveOrUpdate(schedule: Schedule): Long {
-        val existing: ScheduleEntity? = jpa.findOneByNaturalKey(
-            schedule.campaign.id, schedule.adSet.id, schedule.creative.id
-        )
-        return if (existing == null) {
-            jpa.save(mapper.toEntity(schedule)).id!!
-        } else {
-            mapper.applyDomain(existing, schedule)
-            jpa.save(existing).id!!
-        }
+        val existing: ScheduleEntity? =
+            jpa.findOneByNaturalKey(schedule.campaign.id, schedule.adSet.id, schedule.creative.id)
+        return if (existing == null) insert(schedule) else update(existing, schedule)
     }
 
     @Transactional
     override fun saveOrUpdateAll(schedules: List<Schedule>): Int {
         schedules.forEach { saveOrUpdate(it) }
         return schedules.size
+    }
+
+    /* -------- 내부 메소드 -------- */
+
+    private fun insert(schedule: Schedule): Long {
+        val saved = jpa.save(mapper.toEntity(schedule))
+        val id = requireNotNull(saved.id)
+        writeRedis(id, schedule)   // 🔹 DB PK로 Redis 저장
+        return id
+    }
+
+    private fun update(existing: ScheduleEntity, schedule: Schedule): Long {
+        mapper.applyDomain(existing, schedule)
+        val saved = jpa.save(existing)
+        val id = requireNotNull(saved.id)
+        writeRedis(id, schedule)   // 🔹 갱신된 값으로 Redis 갱신
+        return id
+    }
+
+    private fun writeRedis(scheduleId: Long, schedule: Schedule) {
+        // 1) Schedule 캐시, 광고 플랫폼 서버에서 관련 서빙 정책을 준수하는 경우에만 필터링하여 제공한다 가정
+        scheduleWriter.put(scheduleId, schedule)
+
+        // 2) 예산 캐시
+        spentWriter.put(
+            scheduleId,
+            SpentBudget(
+                totalSpentBudget = schedule.campaign.totalSpentBudget,
+                dailySpentBudget = schedule.adSet.dailySpentBudget
+            )
+        )
     }
 }
