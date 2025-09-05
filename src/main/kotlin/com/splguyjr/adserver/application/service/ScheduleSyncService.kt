@@ -1,6 +1,6 @@
 package com.splguyjr.adserver.application.service
 
-import com.splguyjr.adserver.application.port.`in`.ScheduleSyncUseCase
+import com.splguyjr.adserver.application.port.inbound.ScheduleSyncUseCase
 import com.splguyjr.adserver.domain.port.outbound.AdPlatformClientPort
 import com.splguyjr.adserver.domain.port.outbound.ScheduleRepository
 import org.slf4j.LoggerFactory

@@ -1,6 +1,6 @@
 package com.splguyjr.adserver.presentation.scheduler
 
-import com.splguyjr.adserver.application.port.`in`.ScheduleSyncUseCase
+import com.splguyjr.adserver.application.port.inbound.ScheduleSyncUseCase
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
