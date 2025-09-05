@@ -1,49 +1,19 @@
 package com.splguyjr.adserver.infrastructure.adapter.outbound.client
 
-import com.splguyjr.adserver.domain.model.AdSet
-import com.splguyjr.adserver.domain.model.Campaign
-import com.splguyjr.adserver.domain.model.Creative
-import com.splguyjr.adserver.domain.model.enum.BillingType
-import com.splguyjr.adserver.domain.model.enum.Status
+import com.splguyjr.adserver.domain.model.Schedule
 import com.splguyjr.adserver.domain.port.outbound.AdPlatformClientPort
-import com.splguyjr.adserver.domain.common.exception.enumOrThrow
 import com.splguyjr.adserver.infrastructure.adapter.outbound.client.feign.AdPlatformFeignClient
+import com.splguyjr.adserver.infrastructure.adapter.outbound.client.mapper.ScheduleDtoMapper
 import org.springframework.stereotype.Component
-import java.time.Instant
 
 @Component
 class AdPlatformClientAdapter(
-    private val feign: AdPlatformFeignClient
+    private val feign: AdPlatformFeignClient,
+    private val mapper: ScheduleDtoMapper
 ) : AdPlatformClientPort {
 
-    override fun fetchCampaigns(since: Instant?): List<Campaign> =
-        feign.campaigns(since?.toString()).map { Campaign(it.id, it.totalBudget) }
-
-    override fun fetchAdSets(campaignId: Long, since: Instant?): List<AdSet> =
-        feign.adsets(campaignId, since?.toString()).map {
-            AdSet(
-                id = it.id,
-                campaignId = it.campaignId,
-                startDate = it.startDate,
-                endDate = it.endDate,
-                dailyBudget = it.dailyBudget,
-                bidAmount = it.bidAmount,
-                billingType = enumOrThrow<BillingType>(it.billingType, "adset.billingType"),
-                status     = enumOrThrow<Status>(it.status, "adset.status")
-            )
-        }
-
-    override fun fetchCreatives(adSetId: Long, since: Instant?): List<Creative> =
-        feign.creatives(adSetId, since?.toString()).map {
-            Creative(
-                id = it.id,
-                imagePath = it.imagePath,
-                logoPath = it.logoPath,
-                title = it.title,
-                subtitle = it.subtitle,
-                description = it.description,
-                landingUrl = it.landingUrl,
-                status = enumOrThrow<Status>(it.status, "creative.status")
-            )
-        }
+    override fun fetchSchedules(): List<Schedule> {
+       val rows = feign.schedules(null)
+        return mapper.toDomainList(rows)
+    }
 }

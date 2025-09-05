@@ -9,8 +9,8 @@ import java.time.LocalDate
 @Embeddable
 data class AdSetVO(
 
-    @Column(table = "ad_set", name = "campaign_id", nullable = false)
-    var campaignId: Long? = null,
+    @Column(table = "ad_set", name = "ad_set_id", nullable = false)
+    var adSetId: Long? = null,
 
     @Column(table = "ad_set", name = "start_date", nullable = false)
     var startDate: LocalDate? = null,

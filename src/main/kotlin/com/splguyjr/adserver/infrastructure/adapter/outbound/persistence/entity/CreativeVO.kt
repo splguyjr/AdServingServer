@@ -11,10 +11,10 @@ data class CreativeVO(
     var creativeId: Long? = null,
 
     @Column(table = "creative", name = "image_path", nullable = false, length = 2048)
-    var imagePath: String? = null,
+    var imageUrl: String? = null,
 
     @Column(table = "creative", name = "logo_path", nullable = false, length = 2048)
-    var logoPath: String? = null,
+    var logoUrl: String? = null,
 
     @Column(table = "creative", name = "title", nullable = false, length = 255)
     var title: String? = null,

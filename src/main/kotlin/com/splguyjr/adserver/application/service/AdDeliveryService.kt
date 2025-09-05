@@ -3,11 +3,9 @@ package com.splguyjr.adserver.application.service
 import com.splguyjr.adserver.application.dto.AdDeliveryResponse
 import com.splguyjr.adserver.domain.model.enum.Status
 import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.RedisCacheWriter
-import com.splguyjr.adserver.infrastructure.adapter.outbound.persistence.repository.ScheduleRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
-import kotlin.random.Random
 
 @Service
 class AdDeliveryService(
