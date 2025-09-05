@@ -4,7 +4,6 @@ import com.splguyjr.adserver.domain.model.enum.Status
 
 data class Creative(
     val id: Long,
-    val defaultAdSetId: Long?,
     val imagePath: String,
     val logoPath: String,
     val title: String,

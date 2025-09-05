@@ -3,7 +3,6 @@ package com.splguyjr.adserver.infrastructure.adapter.outbound.client.feign
 import com.splguyjr.adserver.infrastructure.adapter.outbound.client.dto.AdSetDto
 import com.splguyjr.adserver.infrastructure.adapter.outbound.client.dto.CampaignDto
 import com.splguyjr.adserver.infrastructure.adapter.outbound.client.dto.CreativeDto
-import com.splguyjr.adserver.infrastructure.adapter.outbound.client.dto.SegmentDto
 import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -23,7 +22,4 @@ interface AdPlatformFeignClient {
 
     @GetMapping("/v1/adsets/{adSetId}/creatives")
     fun creatives(@PathVariable adSetId: Long, @RequestParam since: String? = null): List<CreativeDto>
-
-    @GetMapping("/v1/adsets/{adSetId}/segments")
-    fun segments(@PathVariable adSetId: Long): List<SegmentDto>
 }

@@ -3,10 +3,7 @@ package com.splguyjr.adserver.application.service
 import com.splguyjr.adserver.application.dto.AdDeliveryResponse
 import com.splguyjr.adserver.domain.model.enum.Status
 import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.RedisCacheWriter
-import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.RedisKeys
-import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.dto.CreativeCache
-import com.splguyjr.adserver.infrastructure.adapter.outbound.persistence.repository.AdSetCreativeRepository
-import com.splguyjr.adserver.infrastructure.adapter.outbound.persistence.repository.AdSetRepository
+import com.splguyjr.adserver.infrastructure.adapter.outbound.persistence.repository.ScheduleRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -15,8 +12,7 @@ import kotlin.random.Random
 @Service
 class AdDeliveryService(
     private val cache: RedisCacheWriter,
-    private val adSetRepo: AdSetRepository,
-    private val adSetCreativeRepo: AdSetCreativeRepository
+    private val scheduleRepo: ScheduleRepository
 ) {
     /** 1차 Redis, 미스 시 MySQL로 채워넣고 한 개 전달 */
     @Transactional(readOnly = true)
@@ -26,13 +22,13 @@ class AdDeliveryService(
 
         // 2) Fallback: DB 재조회 → Redis 갱신(간이) → 하나 선택
         val today = LocalDate.now()
-        val eligibleAdSetIds = adSetRepo.findEligibleAdSetIds(today)
+        val eligibleAdSetIds = scheduleRepo.findEligibleAdSetScheduleIds(today)
         if (eligibleAdSetIds.isEmpty()) return null
 
-        val rows = adSetCreativeRepo.findCreativeCacheRowsByAdSetIds(eligibleAdSetIds, Status.ON)
+        val rows = scheduleRepo.findCreativeCacheRowsByAdSetIds(eligibleAdSetIds, Status.ON)
         if (rows.isEmpty()) return null
 
-        val cacheByAdSet: Map<Long, CreativeCache> = rows.associate { row ->
+        /*val cacheByAdSet: Map<Long, CreativeCache> = rows.associate { row ->
             row.adSetId to CreativeCache(
                 imagePath = row.imagePath,
                 logoPath = row.logoPath,
@@ -54,7 +50,7 @@ class AdDeliveryService(
 
         // 하나 골라 반환
         val chosenAdSetId = idsWithCreative[Random.nextInt(idsWithCreative.size)].toLong()
-        return AdDeliveryResponse(chosenAdSetId, cacheByAdSet[chosenAdSetId]!!)
+        return AdDeliveryResponse(chosenAdSetId, cacheByAdSet[chosenAdSetId]!!)*/
     }
 
     private fun tryPickFromCache(): AdDeliveryResponse? {
