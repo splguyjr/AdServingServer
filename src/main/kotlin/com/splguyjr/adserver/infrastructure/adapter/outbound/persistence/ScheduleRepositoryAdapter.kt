@@ -48,6 +48,10 @@ class ScheduleRepositoryAdapter(
             )
         }
 
+    @Transactional(readOnly = true)
+    override fun findById(id: Long): Schedule? =
+        jpa.findById(id).orElse(null)?.let { mapper.toDomain(it) }
+
     /* -------- 내부 메소드 -------- */
 
     private fun insert(schedule: Schedule): Long {

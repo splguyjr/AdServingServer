@@ -21,4 +21,7 @@ interface ScheduleRepository {
 
     /** 상태=ON & 기간=해당일 포함 스케줄의 (id, 총예산, 일일예산) 조회 */
     fun findEligibleOnDateWithBudgets(date: LocalDate): List<EligibleScheduleBudget>
+
+    /** fallback 용 단건 조회 */
+    fun findById(id: Long): Schedule?
 }

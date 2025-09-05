@@ -29,12 +29,10 @@ class ScheduleDtoMapper {
 
         val adSet = AdSet(
             id = a.id,
-            campaignId = a.campaignId,
             // DTO가 문자열이면: LocalDate.parse(a.startDate)
             startDate = a.startDate,
             endDate   = a.endDate,
             dailyBudget = a.dailyBudget,
-            bidAmount   = a.bidAmount,
             billingType = enumOrThrow<BillingType>(a.billingType, "adset.billingType"),
             status      = enumOrThrow<Status>(a.status, "adset.status"),
             dailySpentBudget = a.dailySpentBudget
@@ -46,7 +44,6 @@ class ScheduleDtoMapper {
             logoUrl = r.logoUrl,
             title = r.title,
             subtitle = r.subtitle,
-            description = r.description,
             landingUrl = r.landingUrl,
             status = enumOrThrow<Status>(r.status, "creative.status")
         )
