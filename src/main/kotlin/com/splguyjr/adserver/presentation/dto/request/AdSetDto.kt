@@ -1,4 +1,4 @@
-package com.splguyjr.adserver.infrastructure.adapter.outbound.client.dto
+package com.splguyjr.adserver.presentation.dto.request
 
 import java.time.LocalDate
 

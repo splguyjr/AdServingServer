@@ -1,4 +1,4 @@
-package com.splguyjr.adserver.infrastructure.adapter.outbound.client.mapper
+package com.splguyjr.adserver.application.mapper
 
 import com.splguyjr.adserver.domain.common.exception.enumOrThrow
 import com.splguyjr.adserver.domain.model.AdSet
@@ -7,7 +7,7 @@ import com.splguyjr.adserver.domain.model.Creative
 import com.splguyjr.adserver.domain.model.Schedule
 import com.splguyjr.adserver.domain.model.enum.BillingType
 import com.splguyjr.adserver.domain.model.enum.Status
-import com.splguyjr.adserver.infrastructure.adapter.outbound.client.dto.ScheduleDto
+import com.splguyjr.adserver.presentation.dto.request.ScheduleDto
 import org.springframework.stereotype.Component
 
 @Component
@@ -29,7 +29,6 @@ class ScheduleDtoMapper {
 
         val adSet = AdSet(
             id = a.id,
-            // DTO가 문자열이면: LocalDate.parse(a.startDate)
             startDate = a.startDate,
             endDate   = a.endDate,
             dailyBudget = a.dailyBudget,
