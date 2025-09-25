@@ -10,17 +10,18 @@ import org.springframework.stereotype.Component
 @Component
 class RedisScheduleCacheAdapter(
     private val stringRedis: StringRedisTemplate,
-    private val spentTemplate: RedisTemplate<String, SpentBudget>
+    private val spentTemplate: RedisTemplate<String, SpentBudget>,
+    private val key: RedisKeys
 ) : CandidateCachePort, SpentBudgetReaderPort {
 
     // --- CandidateCachePort ---
     override fun getCurrentCandidateScheduleIds(): Set<Long> =
-        stringRedis.opsForSet().members(RedisKeys.candidateSchedules)
+        stringRedis.opsForSet().members(key.candidateSchedules())
             ?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet()
 
     /** Full rebuild: 기존 set 삭제 후 새 후보군으로 교체 */
     override fun overwriteCandidateScheduleIds(newIds: Set<Long>) {
-        val key = RedisKeys.candidateSchedules
+        val key = key.candidateSchedules()
         stringRedis.delete(key)
         if (newIds.isNotEmpty()) {
             stringRedis.opsForSet().add(key, *newIds.map(Long::toString).toTypedArray())
@@ -29,5 +30,5 @@ class RedisScheduleCacheAdapter(
 
     // --- SpentBudgetReaderPort ---
     override fun get(scheduleId: Long): SpentBudget? =
-        spentTemplate.opsForValue().get(RedisKeys.scheduleSpentBudget(scheduleId))
+        spentTemplate.opsForValue().get(key.scheduleSpentBudget(scheduleId))
 }

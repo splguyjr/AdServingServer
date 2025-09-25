@@ -21,36 +21,42 @@ class RedisConfig {
     /** scheduleId:Schedule 값을 위한 템플릿 */
     @Bean
     fun scheduleRedisTemplate(
-        cf: RedisConnectionFactory,
+        connectionFactory: RedisConnectionFactory,
         objectMapper: ObjectMapper
     ): RedisTemplate<String, Schedule> {
-        val t = RedisTemplate<String, Schedule>()
-        t.setConnectionFactory(cf)
-        val key = StringRedisSerializer()
-        val value = Jackson2JsonRedisSerializer(objectMapper, Schedule::class.java)
-        t.keySerializer = key
-        t.hashKeySerializer = key
-        t.valueSerializer = value
-        t.hashValueSerializer = value
-        t.afterPropertiesSet()
-        return t
+        val template = RedisTemplate<String, Schedule>()
+        template.setConnectionFactory(connectionFactory)
+
+        val keySerializer = StringRedisSerializer()
+        val valueSerializer = Jackson2JsonRedisSerializer(objectMapper, Schedule::class.java)
+
+        template.keySerializer = keySerializer
+        template.hashKeySerializer = keySerializer
+        template.valueSerializer = valueSerializer
+        template.hashValueSerializer = valueSerializer
+
+        template.afterPropertiesSet()
+        return template
     }
 
     /** scheduleId:SpentBudget 값을 위한 템플릿 */
     @Bean
     fun spentBudgetRedisTemplate(
-        cf: RedisConnectionFactory,
+        connectionFactory: RedisConnectionFactory,
         objectMapper: ObjectMapper
     ): RedisTemplate<String, SpentBudget> {
-        val t = RedisTemplate<String, SpentBudget>()
-        t.setConnectionFactory(cf)
-        val key = StringRedisSerializer()
-        val value = Jackson2JsonRedisSerializer(objectMapper, SpentBudget::class.java)
-        t.keySerializer = key
-        t.hashKeySerializer = key
-        t.valueSerializer = value
-        t.hashValueSerializer = value
-        t.afterPropertiesSet()
-        return t
+        val template = RedisTemplate<String, SpentBudget>()
+        template.setConnectionFactory(connectionFactory)
+
+        val keySerializer = StringRedisSerializer()
+        val valueSerializer = Jackson2JsonRedisSerializer(objectMapper, SpentBudget::class.java)
+
+        template.keySerializer = keySerializer
+        template.hashKeySerializer = keySerializer
+        template.valueSerializer = valueSerializer
+        template.hashValueSerializer = valueSerializer
+
+        template.afterPropertiesSet()
+        return template
     }
 }

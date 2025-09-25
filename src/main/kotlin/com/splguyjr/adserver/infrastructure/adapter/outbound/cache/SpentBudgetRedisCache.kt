@@ -6,16 +6,17 @@ import org.springframework.stereotype.Component
 
 @Component
 class SpentBudgetRedisCache(
-    private val template: RedisTemplate<String, SpentBudget>
+    private val template: RedisTemplate<String, SpentBudget>,
+    private val key: RedisKeys
 ) {
     fun put(scheduleId: Long, value: SpentBudget) {
-        template.opsForValue().set(RedisKeys.scheduleSpentBudget(scheduleId), value)
+        template.opsForValue().set(key.scheduleSpentBudget(scheduleId), value)
     }
 
     fun get(scheduleId: Long): SpentBudget? =
-        template.opsForValue().get(RedisKeys.scheduleSpentBudget(scheduleId))
+        template.opsForValue().get(key.scheduleSpentBudget(scheduleId))
 
     fun delete(scheduleId: Long) {
-        template.delete(RedisKeys.scheduleSpentBudget(scheduleId))
+        template.delete(key.scheduleSpentBudget(scheduleId))
     }
 }
