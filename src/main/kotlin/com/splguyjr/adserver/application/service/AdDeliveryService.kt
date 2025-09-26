@@ -1,12 +1,12 @@
 package com.splguyjr.adserver.application.service
 
+import com.splguyjr.adserver.application.port.inbound.BudgetUseCase
+import com.splguyjr.adserver.domain.model.Schedule
 import com.splguyjr.adserver.domain.port.outbound.CandidateCachePort
 import com.splguyjr.adserver.domain.port.outbound.ScheduleRepository
-import com.splguyjr.adserver.domain.port.outbound.SpentBudgetPort
 import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.ScheduleRedisCache
 import com.splguyjr.adserver.presentation.dto.AdDeliveryResponse
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 
 @Service
@@ -14,42 +14,35 @@ class AdDeliveryService(
     private val candidateCache: CandidateCachePort,
     private val scheduleCache: ScheduleRedisCache,     // Redis 본문: scheduleId -> Schedule
     private val scheduleRepository: ScheduleRepository,
-    private val spentBudgetReader: SpentBudgetPort
+    private val budgetUseCase: BudgetUseCase
 ) {
-    @Transactional(readOnly = true)
+    data class Pick(val id: Long, val schedule: Schedule)
+
     fun deliverOne(): AdDeliveryResponse? {
         val today = LocalDate.now()
+        val pick = selectEligible(today) ?: return null
 
-        // 1) Redis 캐시 후보군들 중 하나 선정
-        candidateCache.getCurrentCandidateScheduleIds()
-            .shuffled()
-            .forEach { id ->
-                val schedule = scheduleCache.get(id) ?: scheduleRepository.findById(id)
-                if (schedule != null) {
-                    val spent = spentBudgetReader.get(id)
-                    if (schedule.isEligibleToday(today, spent)) {
-                        return AdDeliveryResponse.from(id, schedule, spent)
-                    }
-                }
+        // 과금 수행(내부에서 SpentBudget 조회/갱신) 후, 최신 예산으로 응답 구성
+        val updatedBudget = budgetUseCase.applyCharge(pick.id, pick.schedule)
+        return AdDeliveryResponse.from(pick.id, pick.schedule, updatedBudget)
+    }
+
+    fun selectEligible(today: LocalDate): Pick? {
+        // 1) 후보군에서 순차 탐색
+        for (id in candidateCache.getCurrentCandidateScheduleIds()) {
+            val sch = scheduleCache.get(id) ?: scheduleRepository.findById(id) ?: continue
+            if (budgetUseCase.isEligibleToday(id, sch, today)) {
+                return Pick(id, sch)
             }
-
-        // 2) fallback: 오늘자 eligible 계산 → 소진액 기준으로 필터 → 랜덤 선택
-        val rows = scheduleRepository.findEligibleOnDateWithBudgets(today)
-
-        val eligibleIds = rows.mapNotNull { r ->
-            val spent = spentBudgetReader.get(r.scheduleId)
-            val schedule = scheduleCache.get(r.scheduleId) ?: scheduleRepository.findById(r.scheduleId)
-
-            if (schedule != null && schedule.isEligibleToday(today, spent)) r.scheduleId
-            else null
         }
-
-        if (eligibleIds.isEmpty()) return null
-
-        val pick = eligibleIds.random()
-        val schedule = scheduleCache.get(pick) ?: scheduleRepository.findById(pick) ?: return null
-        val spent = spentBudgetReader.get(pick)
-
-        return AdDeliveryResponse.from(pick, schedule, spent)
+        // 2) 폴백: DB 기반 후보 조회 후 순차 탐색
+        for (r in scheduleRepository.findEligibleOnDateWithBudgets(today)) {
+            val id = r.scheduleId
+            val sch = scheduleCache.get(id) ?: scheduleRepository.findById(id) ?: continue
+            if (budgetUseCase.isEligibleToday(id, sch, today)) {
+                return Pick(id, sch)
+            }
+        }
+        return null
     }
 }

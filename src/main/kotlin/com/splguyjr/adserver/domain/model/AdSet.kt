@@ -12,7 +12,8 @@ data class AdSet(
     val dailyBudget: Long,
     val billingType: BillingType,
     val status: Status,
-    val dailySpentBudget: Long = 0L
+    val dailySpentBudget: Long = 0L,
+    val bidAmount: Long = 0L
 ) {
     init {
         require(!startDate.isAfter(endDate)) {

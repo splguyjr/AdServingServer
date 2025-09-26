@@ -81,7 +81,8 @@ class ScheduleEntityMapper {
                 endDate = requireNotNull(e.adSet.endDate),
                 dailyBudget = requireNotNull(e.adSet.dailyBudget),
                 billingType = requireNotNull(e.adSet.billingType),
-                status = requireNotNull(e.adSet.status)
+                status = requireNotNull(e.adSet.status),
+                bidAmount = requireNotNull(e.adSet.bidAmount)
             ),
             creative = Creative(
                 id = requireNotNull(e.creative.creativeId),

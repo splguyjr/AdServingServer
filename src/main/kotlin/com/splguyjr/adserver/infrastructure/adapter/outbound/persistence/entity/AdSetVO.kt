@@ -25,7 +25,10 @@ data class AdSetVO(
     var billingType: BillingType? = null,
 
     @Column(table = "ad_set", name = "status", nullable = false, length = 5)
-    var status: Status? = null
+    var status: Status? = null,
+
+    @Column(table = "ad_set", name = "bid_amount", nullable = false)
+    var bidAmount: Long = 0L,
 )
 
 

@@ -34,7 +34,8 @@ class ScheduleDtoMapper {
             dailyBudget = a.dailyBudget,
             billingType = enumOrThrow<BillingType>(a.billingType, "adset.billingType"),
             status      = enumOrThrow<Status>(a.status, "adset.status"),
-            dailySpentBudget = a.dailySpentBudget
+            dailySpentBudget = a.dailySpentBudget,
+            bidAmount = a.bidAmount
         )
 
         val creative = Creative(
