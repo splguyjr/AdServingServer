@@ -4,7 +4,7 @@ import com.splguyjr.adserver.application.port.inbound.CandidateWarmupResult
 import com.splguyjr.adserver.application.port.inbound.CandidateWarmupUseCase
 import com.splguyjr.adserver.domain.port.outbound.CandidateCachePort
 import com.splguyjr.adserver.domain.port.outbound.ScheduleRepository
-import com.splguyjr.adserver.domain.port.outbound.SpentBudgetReaderPort
+import com.splguyjr.adserver.domain.port.outbound.SpentBudgetPort
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -13,7 +13,7 @@ import java.time.LocalDate
 @Service
 class CandidateWarmupService(
     private val scheduleRepo: ScheduleRepository,
-    private val budgetReader: SpentBudgetReaderPort,
+    private val budgetReader: SpentBudgetPort,
     private val candidateCache: CandidateCachePort
 ) : CandidateWarmupUseCase {
 

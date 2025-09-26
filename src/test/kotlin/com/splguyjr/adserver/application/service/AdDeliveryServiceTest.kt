@@ -8,7 +8,7 @@ import com.splguyjr.adserver.domain.model.enum.BillingType
 import com.splguyjr.adserver.domain.model.enum.Status
 import com.splguyjr.adserver.domain.port.outbound.CandidateCachePort
 import com.splguyjr.adserver.domain.port.outbound.ScheduleRepository
-import com.splguyjr.adserver.domain.port.outbound.SpentBudgetReaderPort
+import com.splguyjr.adserver.domain.port.outbound.SpentBudgetPort
 import com.splguyjr.adserver.domain.readmodel.SpentBudget
 import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.ScheduleRedisCache
 import com.splguyjr.adserver.presentation.dto.AdDeliveryResponse
@@ -31,7 +31,7 @@ class AdDeliveryServiceTest {
     @Mock
     lateinit var scheduleRepository: ScheduleRepository
     @Mock
-    lateinit var spentBudgetReader: SpentBudgetReaderPort
+    lateinit var spentBudgetReader: SpentBudgetPort
 
     @InjectMocks
     lateinit var sut: AdDeliveryService

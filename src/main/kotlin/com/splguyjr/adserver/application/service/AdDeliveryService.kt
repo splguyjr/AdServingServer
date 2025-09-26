@@ -2,7 +2,7 @@ package com.splguyjr.adserver.application.service
 
 import com.splguyjr.adserver.domain.port.outbound.CandidateCachePort
 import com.splguyjr.adserver.domain.port.outbound.ScheduleRepository
-import com.splguyjr.adserver.domain.port.outbound.SpentBudgetReaderPort
+import com.splguyjr.adserver.domain.port.outbound.SpentBudgetPort
 import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.ScheduleRedisCache
 import com.splguyjr.adserver.presentation.dto.AdDeliveryResponse
 import org.springframework.stereotype.Service
@@ -14,7 +14,7 @@ class AdDeliveryService(
     private val candidateCache: CandidateCachePort,
     private val scheduleCache: ScheduleRedisCache,     // Redis 본문: scheduleId -> Schedule
     private val scheduleRepository: ScheduleRepository,
-    private val spentBudgetReader: SpentBudgetReaderPort
+    private val spentBudgetReader: SpentBudgetPort
 ) {
     @Transactional(readOnly = true)
     fun deliverOne(): AdDeliveryResponse? {

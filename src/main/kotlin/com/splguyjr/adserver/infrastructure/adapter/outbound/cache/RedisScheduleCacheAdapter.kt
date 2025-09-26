@@ -1,7 +1,7 @@
 package com.splguyjr.adserver.infrastructure.adapter.outbound.cache
 
 import com.splguyjr.adserver.domain.port.outbound.CandidateCachePort
-import com.splguyjr.adserver.domain.port.outbound.SpentBudgetReaderPort
+import com.splguyjr.adserver.domain.port.outbound.SpentBudgetPort
 import com.splguyjr.adserver.domain.readmodel.SpentBudget
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.StringRedisTemplate
@@ -12,7 +12,7 @@ class RedisScheduleCacheAdapter(
     private val stringRedis: StringRedisTemplate,
     private val spentTemplate: RedisTemplate<String, SpentBudget>,
     private val key: RedisKeys
-) : CandidateCachePort, SpentBudgetReaderPort {
+) : CandidateCachePort, SpentBudgetPort {
 
     // --- CandidateCachePort ---
     override fun getCurrentCandidateScheduleIds(): Set<Long> =
@@ -28,7 +28,11 @@ class RedisScheduleCacheAdapter(
         }
     }
 
-    // --- SpentBudgetReaderPort ---
+    // --- SpentBudgetPort ---
     override fun get(scheduleId: Long): SpentBudget? =
         spentTemplate.opsForValue().get(key.scheduleSpentBudget(scheduleId))
+
+    override fun put(scheduleId: Long, value: SpentBudget) {
+        spentTemplate.opsForValue().set(key.scheduleSpentBudget(scheduleId), value)
+    }
 }

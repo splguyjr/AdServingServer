@@ -3,7 +3,7 @@ package com.splguyjr.adserver.application.service
 import com.splguyjr.adserver.application.port.inbound.CandidateWarmupResult
 import com.splguyjr.adserver.domain.port.outbound.CandidateCachePort
 import com.splguyjr.adserver.domain.port.outbound.ScheduleRepository
-import com.splguyjr.adserver.domain.port.outbound.SpentBudgetReaderPort
+import com.splguyjr.adserver.domain.port.outbound.SpentBudgetPort
 import com.splguyjr.adserver.domain.readmodel.EligibleScheduleBudget
 import com.splguyjr.adserver.domain.readmodel.SpentBudget
 import org.junit.jupiter.api.extension.ExtendWith
@@ -20,7 +20,7 @@ class CandidateWarmupServiceTest {
     @Mock
     lateinit var scheduleRepo: ScheduleRepository
     @Mock
-    lateinit var budgetReader: SpentBudgetReaderPort
+    lateinit var budgetReader: SpentBudgetPort
     @Mock
     lateinit var candidateCache: CandidateCachePort
 
