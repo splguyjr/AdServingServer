@@ -2,10 +2,10 @@ package com.splguyjr.adserver.infrastructure.adapter.outbound.persistence
 
 import com.splguyjr.adserver.domain.model.Schedule
 import com.splguyjr.adserver.domain.port.outbound.ScheduleRepository
+import com.splguyjr.adserver.domain.port.outbound.cache.DailySpentPort
+import com.splguyjr.adserver.domain.port.outbound.cache.ScheduleCachePort
+import com.splguyjr.adserver.domain.port.outbound.cache.TotalSpentPort
 import com.splguyjr.adserver.domain.readmodel.EligibleScheduleBudget
-import com.splguyjr.adserver.domain.readmodel.SpentBudget
-import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.ScheduleRedisCache
-import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.SpentBudgetRedisCache
 import com.splguyjr.adserver.infrastructure.adapter.outbound.persistence.entity.ScheduleEntity
 import com.splguyjr.adserver.infrastructure.adapter.outbound.persistence.mapper.ScheduleEntityMapper
 import com.splguyjr.adserver.infrastructure.adapter.outbound.persistence.repository.SpringDataScheduleRepository
@@ -17,8 +17,9 @@ import java.time.LocalDate
 class ScheduleRepositoryAdapter(
     private val jpa: SpringDataScheduleRepository,
     private val mapper: ScheduleEntityMapper,
-    private val scheduleWriter: ScheduleRedisCache,
-    private val spentBudgetCache: SpentBudgetRedisCache
+    private val scheduleWriter: ScheduleCachePort,
+    private val totalWriter: TotalSpentPort,
+    private val dailyWriter: DailySpentPort
 ) : ScheduleRepository {
 
     override fun findIdByNaturalKey(
@@ -27,7 +28,7 @@ class ScheduleRepositoryAdapter(
 
     @Transactional
     override fun saveOrUpdate(schedule: Schedule): Long {
-        val existing: ScheduleEntity? =
+        val existing =
             jpa.findOneByNaturalKey(schedule.campaign.id, schedule.adSet.id, schedule.creative.id)
         return if (existing == null) insert(schedule) else update(existing, schedule)
     }
@@ -57,7 +58,7 @@ class ScheduleRepositoryAdapter(
     private fun insert(schedule: Schedule): Long {
         val saved = jpa.save(mapper.toEntity(schedule))
         val id = requireNotNull(saved.id)
-        writeRedis(id, schedule)   // 🔹 DB PK로 Redis 저장
+        writeRedis(id, schedule)
         return id
     }
 
@@ -65,21 +66,16 @@ class ScheduleRepositoryAdapter(
         mapper.applyDomain(existing, schedule)
         val saved = jpa.save(existing)
         val id = requireNotNull(saved.id)
-        writeRedis(id, schedule)   // 🔹 갱신된 값으로 Redis 갱신
+        writeRedis(id, schedule)
         return id
     }
 
     private fun writeRedis(scheduleId: Long, schedule: Schedule) {
-        // 1) Schedule 캐시, 광고 플랫폼 서버에서 관련 서빙 정책을 준수하는 경우에만 필터링하여 제공한다 가정
+        // 1) Schedule 캐시
         scheduleWriter.put(scheduleId, schedule)
 
-        // 2) 예산 캐시
-        spentBudgetCache.put(
-            scheduleId,
-            SpentBudget(
-                totalSpentBudget = schedule.campaign.totalSpentBudget,
-                dailySpentBudget = schedule.adSet.dailySpentBudget
-            )
-        )
+        // 2) 예산 캐시: total/daily 분리 저장
+        totalWriter.putTotal(scheduleId, schedule.campaign.totalSpentBudget)
+        dailyWriter.putDaily(scheduleId, schedule.adSet.dailySpentBudget)
     }
 }

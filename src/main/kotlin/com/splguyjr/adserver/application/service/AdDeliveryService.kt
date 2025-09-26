@@ -2,9 +2,9 @@ package com.splguyjr.adserver.application.service
 
 import com.splguyjr.adserver.application.port.inbound.BudgetUseCase
 import com.splguyjr.adserver.domain.model.Schedule
-import com.splguyjr.adserver.domain.port.outbound.CandidateCachePort
+import com.splguyjr.adserver.domain.port.outbound.cache.CandidateCachePort
 import com.splguyjr.adserver.domain.port.outbound.ScheduleRepository
-import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.ScheduleRedisCache
+import com.splguyjr.adserver.domain.port.outbound.cache.ScheduleCachePort
 import com.splguyjr.adserver.presentation.dto.AdDeliveryResponse
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -12,7 +12,7 @@ import java.time.LocalDate
 @Service
 class AdDeliveryService(
     private val candidateCache: CandidateCachePort,
-    private val scheduleCache: ScheduleRedisCache,     // Redis 본문: scheduleId -> Schedule
+    private val scheduleCache: ScheduleCachePort,     // Redis 본문: scheduleId -> Schedule
     private val scheduleRepository: ScheduleRepository,
     private val budgetUseCase: BudgetUseCase
 ) {

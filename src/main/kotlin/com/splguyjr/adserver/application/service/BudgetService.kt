@@ -2,10 +2,11 @@ package com.splguyjr.adserver.application.service
 
 import com.splguyjr.adserver.application.port.inbound.BudgetUseCase
 import com.splguyjr.adserver.domain.model.Schedule
-import com.splguyjr.adserver.domain.port.outbound.CandidateCachePort
-import com.splguyjr.adserver.domain.port.outbound.SpentBudgetPort
+import com.splguyjr.adserver.domain.port.outbound.cache.CandidateCachePort
+import com.splguyjr.adserver.domain.port.outbound.cache.DailySpentPort
+import com.splguyjr.adserver.domain.port.outbound.cache.ScheduleCachePort
+import com.splguyjr.adserver.domain.port.outbound.cache.TotalSpentPort
 import com.splguyjr.adserver.domain.readmodel.SpentBudget
-import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.ScheduleRedisCache
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -13,13 +14,14 @@ import java.time.LocalDate
 @Service
 class BudgetService (
     private val candidateCachePort: CandidateCachePort,
-    private val spentBudgetPort: SpentBudgetPort,
-    private val scheduleCache: ScheduleRedisCache,
+    private val totalPort: TotalSpentPort,
+    private val dailyPort: DailySpentPort,
+    private val scheduleCache: ScheduleCachePort,
 ) : BudgetUseCase {
 
     private val log = LoggerFactory.getLogger(javaClass)
 
-    /** 자정 배치: daily만 0으로 리셋 (total은 그대로 유지) */
+    /** 자정 배치: 일일 소진액만 0으로 리셋 */
     override fun resetDailySpentForAll(): Int {
         val ids = candidateCachePort.getCurrentCandidateScheduleIds()
 
@@ -30,22 +32,16 @@ class BudgetService (
             "BudgetUpdate: 일일 소진액 리셋 완료. budgets={}, schedules={}, candidates={}",
             resetBudgetCount, resetScheduleCount, ids.size
         )
-        // 반환값은 핵심 지표(예: budget 리셋 건수)로 유지
         return resetBudgetCount
     }
 
-    /** SpentBudgetPort 기준으로 daily만 0으로 리셋 */
+    /** 일일 소진액만 0으로 리셋 */
     private fun resetDailySpentBudgets(ids: Set<Long>): Int {
         var count = 0
         ids.forEach { id ->
-            val cur = spentBudgetPort.get(id) ?: return@forEach
-            if (cur.dailySpentBudget == 0L) return@forEach
-
-            val reset = SpentBudget(
-                totalSpentBudget = cur.totalSpentBudget, // total은 유지
-                dailySpentBudget = 0L
-            )
-            spentBudgetPort.put(id, reset)
+            val curDaily = dailyPort.getDaily(id) ?: 0L
+            if (curDaily == 0L) return@forEach
+            dailyPort.putDaily(id, 0L)
             count++
         }
         return count
@@ -67,19 +63,29 @@ class BudgetService (
 
     /** 오늘 서빙 가능 여부 */
     override fun isEligibleToday(scheduleId: Long, schedule: Schedule, today: LocalDate): Boolean {
-        val spent = spentBudgetPort.get(scheduleId)
+        val spent = SpentBudget(
+            totalSpentBudget = totalPort.getTotal(scheduleId) ?: 0L,
+            dailySpentBudget = dailyPort.getDaily(scheduleId) ?: 0L
+        )
         return schedule.isEligibleToday(today, spent)
     }
 
+    /** total/daily를 각각 더하고 최신값 반환 */
     override fun applyCharge(scheduleId: Long, schedule: Schedule): SpentBudget {
         val delta = schedule.adSet.bidAmount
-        val base = spentBudgetPort.get(scheduleId) ?: SpentBudget(0L, 0L)
-        val updated = SpentBudget(
-            totalSpentBudget = base.totalSpentBudget + delta,
-            dailySpentBudget = base.dailySpentBudget + delta
-        )
-        spentBudgetPort.put(scheduleId, updated)
-        return updated
-    }
 
+        val baseTotal = totalPort.getTotal(scheduleId) ?: 0L
+        val baseDaily = dailyPort.getDaily(scheduleId) ?: 0L
+
+        val updatedTotal = baseTotal + delta
+        val updatedDaily = baseDaily + delta
+
+        totalPort.putTotal(scheduleId, updatedTotal)
+        dailyPort.putDaily(scheduleId, updatedDaily)
+
+        return SpentBudget(
+            totalSpentBudget = updatedTotal,
+            dailySpentBudget = updatedDaily
+        )
+    }
 }

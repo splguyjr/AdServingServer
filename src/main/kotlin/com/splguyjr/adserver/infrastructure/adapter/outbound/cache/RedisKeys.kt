@@ -9,6 +9,9 @@ class RedisKeys(
     private val version: String
 ) {
     fun schedule(id: Long)           = "$version:schedule:{sch:$id}"
-    fun scheduleSpentBudget(id: Long)= "$version:spent:{sch:$id}"
+
+    fun scheduleTotalSpent(id: Long)       = "$version:spent:total:{sch:$id}"
+    fun scheduleDailySpent(id: Long)       = "$version:spent:daily:{sch:$id}"
+
     fun candidateSchedules()         = "$version:candidate:schedules"
 }

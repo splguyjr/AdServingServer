@@ -1,4 +1,4 @@
-package com.splguyjr.adserver.domain.port.outbound
+package com.splguyjr.adserver.domain.port.outbound.cache
 
 /** 후보 스케줄 id 집합 캐시 관련 메소드 정의*/
 interface CandidateCachePort {
