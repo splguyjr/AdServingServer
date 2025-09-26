@@ -14,7 +14,18 @@ class RedisDailySpentAdapter(
     override fun getDaily(scheduleId: Long): Long? =
         stringRedis.opsForValue().get(keys.scheduleDailySpent(scheduleId))?.toLongOrNull()
 
-    override fun putDaily(scheduleId: Long, value: Long) {
-        stringRedis.opsForValue().set(keys.scheduleDailySpent(scheduleId), value.toString())
+    /** 키가 없을 때만 초기화 */
+    override fun initDailyIfAbsent(scheduleId: Long) {
+        stringRedis.opsForValue().setIfAbsent(keys.scheduleDailySpent(scheduleId), "0")
     }
+
+    override fun incrDaily(scheduleId: Long, delta: Long): Long =
+        stringRedis.opsForValue().increment(keys.scheduleDailySpent(scheduleId), delta) ?: 0L
+
+    // INCRBY key 0는 값을 바꾸지 않는 no-op
+    // 리셋은 0으로 교체가 필요하므로 GETSET
+    override fun resetDailyToZero(scheduleId: Long): Long =
+        stringRedis.opsForValue()
+            .getAndSet(keys.scheduleDailySpent(scheduleId), "0")
+            ?.toLongOrNull() ?: 0L
 }

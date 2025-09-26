@@ -75,7 +75,7 @@ class ScheduleRepositoryAdapter(
         scheduleWriter.put(scheduleId, schedule)
 
         // 2) 예산 캐시: total/daily 분리 저장
-        totalWriter.putTotal(scheduleId, schedule.campaign.totalSpentBudget)
-        dailyWriter.putDaily(scheduleId, schedule.adSet.dailySpentBudget)
+        totalWriter.initTotalIfAbsent(scheduleId)
+        dailyWriter.initDailyIfAbsent(scheduleId)
     }
 }

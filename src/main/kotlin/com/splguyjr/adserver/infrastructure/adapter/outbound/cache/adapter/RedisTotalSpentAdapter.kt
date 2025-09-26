@@ -14,7 +14,11 @@ class RedisTotalSpentAdapter(
     override fun getTotal(scheduleId: Long): Long? =
         stringRedis.opsForValue().get(keys.scheduleTotalSpent(scheduleId))?.toLongOrNull()
 
-    override fun putTotal(scheduleId: Long, value: Long) {
-        stringRedis.opsForValue().set(keys.scheduleTotalSpent(scheduleId), value.toString())
+    /** 키가 없을 때만 초기화 */
+    override fun initTotalIfAbsent(scheduleId: Long) {
+        stringRedis.opsForValue().setIfAbsent(keys.scheduleTotalSpent(scheduleId), "0")
     }
+
+    override fun incrTotal(scheduleId: Long, delta: Long): Long =
+        stringRedis.opsForValue().increment(keys.scheduleTotalSpent(scheduleId), delta) ?: 0L
 }

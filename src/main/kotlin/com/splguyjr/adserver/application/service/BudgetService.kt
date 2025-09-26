@@ -39,10 +39,8 @@ class BudgetService (
     private fun resetDailySpentBudgets(ids: Set<Long>): Int {
         var count = 0
         ids.forEach { id ->
-            val curDaily = dailyPort.getDaily(id) ?: 0L
-            if (curDaily == 0L) return@forEach
-            dailyPort.putDaily(id, 0L)
-            count++
+            val prev = dailyPort.resetDailyToZero(id)  // GETSET
+            if (prev != 0L) count++
         }
         return count
     }
@@ -73,19 +71,8 @@ class BudgetService (
     /** total/daily를 각각 더하고 최신값 반환 */
     override fun applyCharge(scheduleId: Long, schedule: Schedule): SpentBudget {
         val delta = schedule.adSet.bidAmount
-
-        val baseTotal = totalPort.getTotal(scheduleId) ?: 0L
-        val baseDaily = dailyPort.getDaily(scheduleId) ?: 0L
-
-        val updatedTotal = baseTotal + delta
-        val updatedDaily = baseDaily + delta
-
-        totalPort.putTotal(scheduleId, updatedTotal)
-        dailyPort.putDaily(scheduleId, updatedDaily)
-
-        return SpentBudget(
-            totalSpentBudget = updatedTotal,
-            dailySpentBudget = updatedDaily
-        )
+        val newTotal = totalPort.incrTotal(scheduleId, delta)
+        val newDaily = dailyPort.incrDaily(scheduleId, delta)
+        return SpentBudget(totalSpentBudget = newTotal, dailySpentBudget = newDaily)
     }
 }
