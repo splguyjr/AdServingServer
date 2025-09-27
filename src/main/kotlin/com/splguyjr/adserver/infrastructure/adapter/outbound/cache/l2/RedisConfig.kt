@@ -1,4 +1,4 @@
-package com.splguyjr.adserver.infrastructure.adapter.outbound.cache
+package com.splguyjr.adserver.infrastructure.adapter.outbound.cache.l2
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.splguyjr.adserver.domain.model.Schedule
@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.data.redis.listener.RedisMessageListenerContainer
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer
 import org.springframework.data.redis.serializer.StringRedisSerializer
 
@@ -37,4 +38,8 @@ class RedisConfig {
         template.afterPropertiesSet()
         return template
     }
+
+    @Bean
+    fun redisMessageListenerContainer(cf: RedisConnectionFactory) =
+        RedisMessageListenerContainer().apply { setConnectionFactory(cf) }
 }

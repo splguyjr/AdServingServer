@@ -1,4 +1,4 @@
-package com.splguyjr.adserver.infrastructure.adapter.outbound.cache
+package com.splguyjr.adserver.infrastructure.adapter.outbound.cache.l2
 
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component

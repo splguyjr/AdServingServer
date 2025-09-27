@@ -1,8 +1,8 @@
-package com.splguyjr.adserver.infrastructure.adapter.outbound.cache.adapter
+package com.splguyjr.adserver.infrastructure.adapter.outbound.cache.l2.adapter
 
 import com.splguyjr.adserver.domain.model.Schedule
 import com.splguyjr.adserver.domain.port.outbound.cache.ScheduleCachePort
-import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.RedisKeys
+import com.splguyjr.adserver.infrastructure.adapter.outbound.cache.l2.RedisKeys
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Component
 
