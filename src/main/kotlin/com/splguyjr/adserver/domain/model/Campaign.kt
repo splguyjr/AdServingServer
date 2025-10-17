@@ -16,8 +16,8 @@ data class Campaign(
     }
 
     /** 주어진 소진액(없으면 자기 값) 기준으로 총 예산 여유가 있는지 */
-    fun hasTotalRoom(spent: SpentBudget?): Boolean {
+    fun hasTotalRoom(spent: SpentBudget?, bidAmount: Long): Boolean {
         val used = spent?.totalSpentBudget ?: totalSpentBudget
-        return used < totalBudget
+        return used + bidAmount <= totalBudget
     }
 }

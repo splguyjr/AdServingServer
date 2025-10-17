@@ -33,8 +33,8 @@ data class AdSet(
                 (date.isEqual(endDate) || date.isBefore(endDate))
 
     /** 주어진 소진액(없으면 자기 값) 기준으로 일일 예산 여유가 있는지 */
-    fun hasDailyRoom(spent: SpentBudget?): Boolean {
+    fun hasDailyRoom(spent: SpentBudget?, bidAmount: Long): Boolean {
         val used = spent?.dailySpentBudget ?: dailySpentBudget
-        return used < dailyBudget
+        return used + bidAmount <= dailyBudget
     }
 }

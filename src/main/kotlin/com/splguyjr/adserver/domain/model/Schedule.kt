@@ -17,6 +17,6 @@ data class Schedule(
     fun isEligibleToday(today: LocalDate, spent: SpentBudget?): Boolean =
         adSet.isActiveOn(today) &&
                 creative.isActive() &&
-                campaign.hasTotalRoom(spent) &&
-                adSet.hasDailyRoom(spent)
+                campaign.hasTotalRoom(spent, adSet.bidAmount) &&
+                adSet.hasDailyRoom(spent, adSet.bidAmount)
 }
