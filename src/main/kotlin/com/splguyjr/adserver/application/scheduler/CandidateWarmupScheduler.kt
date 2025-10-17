@@ -12,7 +12,7 @@ class CandidateWarmupScheduler(
     private val log = LoggerFactory.getLogger(javaClass)
 
     /** 5분 주기 후보군 캐싱 */
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(fixedRate = 300_000)
     fun warmup() {
         runCatching { useCase.warmup() }
             .onSuccess { r -> log.info("Warmup done. candidates={}", r.candidates) }
